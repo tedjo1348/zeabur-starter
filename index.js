@@ -1,5 +1,6 @@
 const url = require('url');
 const { MONGO_URI, MONGODB_URI } = process.env;
+
 if (MONGO_URI || MONGODB_URI) {
   const connectUrl = url.parse(MONGO_URI || MONGODB_URI);
   const [user, password] = connectUrl.auth.split(':');
@@ -13,10 +14,26 @@ if (MONGO_URI || MONGODB_URI) {
 
 const Waline = require('@waline/vercel');
 
+// Tambahkan konfigurasi di dalam objek ini
 const app = Waline({
-  async postSave(comment) {
-    // do what ever you want after save comment
+  // 1. Kustomisasi Teks UI (Server-side Locale)
+  locale: {
+    placeholder: 'Tulis komentar di sini...', // Mengganti teks placeholder default
+    admin: 'Administrator',
   },
+
+  // 2. Custom Hooks
+  async postSave(comment) {
+    // Aksi setelah komentar tersimpan (misal: kirim notifikasi)
+    console.log('Komentar baru tersimpan:', comment.nick);
+  },
+
+  // Contoh hook sebelum menyimpan (untuk filter spam sederhana)
+  async preSave(comment) {
+    if (comment.mail.endsWith('@spam.com')) {
+      return { errmsg: 'Email tidak diizinkan!' };
+    }
+  }
 });
 
 require('http').createServer(app).listen(process.env.PORT || 3000);
